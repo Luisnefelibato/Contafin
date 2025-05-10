@@ -125,8 +125,57 @@ def configure_cors():
     def handle_options(path):
         return '', 200
 
+# Ruta para obtener plantillas Excel
+@app.route('/excel-template', methods=['GET'])
+def get_excel_template():
+    """Obtener plantilla Excel según el tipo solicitado"""
+    template_type = request.args.get('type', 'flujo_caja')
+    
+    # Verificar si el tipo es válido
+    valid_types = ["flujo_caja", "nomina", "balance_general", "estado_resultados", 
+                  "punto_equilibrio", "ratios_financieros"]
+    
+    if template_type not in valid_types:
+        return jsonify({
+            "error": f"Tipo de plantilla no válido. Opciones disponibles: {', '.join(valid_types)}"
+        }), 400
+    
+    try:
+        # Aquí implementarías la función generate_excel_template
+        # Para este ejemplo, creamos un Excel simple
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output)
+        worksheet = workbook.add_worksheet("Ejemplo")
+        worksheet.write('A1', f'Plantilla de {template_type}')
+        worksheet.write('A2', f'Generada el {get_formatted_date()}')
+        workbook.close()
+        output.seek(0)
+        
+        # Enviar el archivo Excel como respuesta
+        filename = f"{template_type}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+        return send_file(
+            output,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+    except Exception as e:
+        logger.error(f"Error al generar plantilla Excel: {e}")
+        return jsonify({"error": f"Error al generar la plantilla: {str(e)}"}), 500
+
 # Aplicar configuración CORS
 configure_cors()
+
+# Ruta para probar que la API está funcionando
+@app.route('/test', methods=['GET'])
+def test_route():
+    return jsonify({"message": "API está funcionando correctamente", "timestamp": get_formatted_date()})
+
+# Iniciar la aplicación si se ejecuta como script principal
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
+    
 # Contexto del sistema para ContaFin
 ASSISTANT_CONTEXT = """
 # ContaFin: Agente Contable-Financiero Especializado en PYMEs
