@@ -1,14 +1,19 @@
 services:
   - type: web
     name: contafin
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    env: docker
     plan: free
     envVars:
       - key: OLLAMA_URL
         value: https://evaenespanol.loca.lt
       - key: MODEL_NAME
         value: llama3:8b
-      - key: PYTHON_VERSION
-        value: 3.11.0
+      - key: FRONTEND_URL
+        value: https://contafin-front.vercel.app
+      - key: ENVIRONMENT
+        value: production
+      - key: PORT
+        value: 10000
+    healthCheckPath: /api/health
+    domains:
+      - contafin-api.onrender.com
